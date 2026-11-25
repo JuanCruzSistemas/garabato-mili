@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f3e8">
+<title>Un garabato para Mili</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f7f3e8;
+    --grid:rgba(70,110,170,.13);
+    --ink:#23335a;
+    --ink-soft:#4a5a85;
+    --red:#e5484d;
+    --yellow:#ffe066;
+    --green:#2f9e6b;
+    --hand:"Caveat","Segoe Print","Bradley Hand",cursive;
+    --body:"Patrick Hand","Segoe Print","Bradley Hand",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:clamp(19px,4.8vw,23px);
+    line-height:1.35;
+    overflow:hidden;
+    user-select:none;
+  }
+  /* margen rojo de cuaderno */
+  body::before{
+    content:"";position:fixed;top:0;bottom:0;left:clamp(26px,9vw,56px);
+    width:2px;background:rgba(229,72,77,.28);pointer-events:none;
+  }
+
+  .doodles{position:fixed;inset:0;pointer-events:none;opacity:.3;overflow:hidden}
+  .doodles svg{position:absolute;stroke:var(--ink-soft);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .d1{top:7%;right:7%;width:54px;animation:float 7s ease-in-out infinite}
+  .d2{bottom:11%;left:12%;width:70px;animation:float 9s ease-in-out -3s infinite}
+  .d3{bottom:20%;right:9%;width:46px;animation:float 8s ease-in-out -5s infinite}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-10px) rotate(4deg)}}
+
+  .app{position:relative;height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;
+       padding:max(16px,env(safe-area-inset-top)) 22px max(16px,env(safe-area-inset-bottom)) clamp(44px,12vw,72px)}
+  .progress{display:flex;gap:7px;padding:6px 0 0}
+  .progress i{height:5px;flex:1;border-radius:4px;background:rgba(35,51,90,.14);overflow:hidden;position:relative}
+  .progress i::after{content:"";position:absolute;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform .5s ease}
+  .progress i.done::after{transform:scaleX(1)}
+
+  .stage{flex:1;position:relative;display:flex;align-items:center;min-height:0}
+  .scene{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:14px;
+         opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease,visibility 0s linear .5s;overflow-y:auto;padding:8px 2px}
+  .scene.active{opacity:1;visibility:visible;transform:none;transition:opacity .5s ease .15s,transform .5s ease .15s}
+
+  h1,h2{font-family:var(--hand);font-weight:700;margin:0;line-height:1.02;color:var(--ink)}
+  h1{font-size:clamp(46px,14vw,70px)}
+  h2{font-size:clamp(34px,10vw,48px)}
+  p{margin:0}
+  .small{font-size:.8em;color:var(--ink-soft)}
+  .hand{font-family:var(--hand);font-size:1.45em;font-weight:500}
+
+  /* aparición escalonada de líneas */
+  .line{opacity:0;transform:translateY(10px)}
+  .scene.active .line{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0)*1s + .3s)}
+  @keyframes rise{to{opacity:1;transform:none}}
+
+  /* tachado de marcador */
+  .strike{background:linear-gradient(transparent 50%,var(--red) 50%,var(--red) 59%,transparent 59%) no-repeat 0 0/0% 100%;
+          -webkit-box-decoration-break:clone;box-decoration-break:clone}
+  .scene.active .strike{animation:strike .6s ease-out both;animation-delay:calc(var(--d,0)*1s + .9s)}
+  @keyframes strike{to{background-size:100% 100%}}
+  /* resaltador */
+  .hl{background:linear-gradient(transparent 55%,var(--yellow) 55%,var(--yellow) 92%,transparent 92%) no-repeat 0 0/0% 100%;
+      -webkit-box-decoration-break:clone;box-decoration-break:clone}
+  .scene.active .hl{animation:strike .7s ease-out both;animation-delay:calc(var(--d,0)*1s + .6s)}
+
+  .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+  .list li{display:flex;gap:12px;align-items:flex-start}
+  .tick{flex:none;width:30px;height:30px;margin-top:1px}
+  .tick path{fill:none;stroke:var(--green);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40}
+  .scene.active .tick path{animation:draw .5s ease-out both;animation-delay:calc(var(--d,0)*1s + .55s)}
+  .box{flex:none;width:26px;height:26px;margin-top:3px;border:2.5px solid var(--ink-soft);border-radius:6px;transform:rotate(-3deg)}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  .cross{flex:none;width:28px;height:28px;margin-top:2px}
+  .cross path{fill:none;stroke:var(--red);stroke-width:4;stroke-linecap:round;stroke-dasharray:32;stroke-dashoffset:32}
+  .scene.active .cross path{animation:draw .45s ease-out both;animation-delay:calc(var(--d,0)*1s + .5s)}
+
+  /* cover scribble */
+  .scribble{width:100%;max-width:360px;height:auto;margin-bottom:-6px}
+  .scribble path{fill:none;stroke:var(--ink);stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2400;stroke-dashoffset:2400}
+  .scribble path.b{stroke:var(--red);stroke-width:4;stroke-dasharray:900;stroke-dashoffset:900}
+  .scene.active .scribble path{animation:draw2 3.2s ease-in-out .2s both}
+  .scene.active .scribble path.b{animation:draw2 1.6s ease-in-out 2.6s both}
+  @keyframes draw2{to{stroke-dashoffset:0}}
+
+  /* canvas final */
+  .pad{position:relative;border:2.5px dashed rgba(35,51,90,.35);border-radius:16px;background:rgba(255,255,255,.55);height:clamp(150px,26dvh,230px);overflow:hidden}
+  .pad canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+  .pad .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-family:var(--hand);font-size:1.5em;pointer-events:none;transition:opacity .3s}
+  .pad.used .hint{opacity:0}
+  .tools{display:flex;gap:10px;align-items:center}
+  .sw{width:26px;height:26px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 2px rgba(35,51,90,.25);padding:0;cursor:pointer}
+  .sw.on{box-shadow:0 0 0 3px var(--ink)}
+  .clear{margin-left:auto;background:none;border:none;font:inherit;color:var(--ink-soft);text-decoration:underline;cursor:pointer;padding:6px}
+
+  .nav{display:flex;align-items:center;gap:12px;padding-top:10px}
+  .btn{font-family:var(--hand);font-weight:700;font-size:1.55em;line-height:1;border:none;border-radius:999px;padding:12px 26px;cursor:pointer;
+       background:var(--ink);color:var(--paper);box-shadow:0 4px 0 rgba(35,51,90,.28);transition:transform .12s,box-shadow .12s}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(35,51,90,.28)}
+  .btn.ghost{background:transparent;color:var(--ink);box-shadow:none;padding:10px 14px;opacity:.7}
+  .btn[hidden]{display:none}
+  .spacer{flex:1}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01s!important;animation-delay:0s!important;transition-duration:.01s!important}
+    .scribble path,.tick path,.cross path{stroke-dashoffset:0!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="doodles" aria-hidden="true">
+  <svg class="d1" viewBox="0 0 60 60"><path d="M30 6l6 17 18 1-14 11 5 18-15-10-15 10 5-18L6 24l18-1z"/></svg>
+  <svg class="d2" viewBox="0 0 80 40"><path d="M4 22c8-16 14 16 22 0s14 16 22 0 14 16 22 0"/></svg>
+  <svg class="d3" viewBox="0 0 50 50"><path d="M25 25m0 0c0-4 6-4 6 0s-10 4-10-4 16-6 16 6-22 8-22-8"/></svg>
+</div>
+
+<main class="app">
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <div class="stage" id="stage">
+
+    <!-- 0 · portada -->
+    <section class="scene" aria-label="Portada">
+      <svg class="scribble" viewBox="0 0 360 150" aria-hidden="true">
+        <path d="M10 110 C 40 20, 90 20, 80 80 S 40 130, 100 100 S 150 10, 175 70 S 150 135, 205 95 S 250 20, 275 75 S 262 120, 300 90 S 340 40, 352 70"/>
+        <path class="b" d="M14 132 C 90 148, 220 148, 346 128"/>
+      </svg>
+      <h1 class="line" style="--d:.2">Un garabato<br>para Mili</h1>
+      <p class="line hand" style="--d:1">(no hace falta que respondas nada)</p>
+    </section>
+
+    <!-- 1 · perdón -->
+    <section class="scene" aria-label="Perdón">
+      <h2 class="line" style="--d:0">Primero,<br>lo importante.</h2>
+      <p class="line" style="--d:.5">Perdón por apurarte hoy.</p>
+      <p class="line" style="--d:1.1">Me ganó la ansiedad. No fue por vos, ni por nada que hayas hecho: fue <span class="hl" style="--d:1.2">cosa mía</span>.</p>
+    </section>
+
+    <!-- 2 · lo que nunca quise -->
+    <section class="scene" aria-label="Lo que nunca quise">
+      <h2 class="line" style="--d:0">Lo que nunca quise:</h2>
+      <ul class="list">
+        <li class="line" style="--d:.5">
+          <svg class="cross" viewBox="0 0 28 28" style="--d:.5"><path d="M5 5l18 18M23 5L5 23"/></svg>
+          <span><span class="strike" style="--d:.5">presionarte</span></span>
+        </li>
+        <li class="line" style="--d:1.2">
+          <svg class="cross" viewBox="0 0 28 28" style="--d:1.2"><path d="M5 5l18 18M23 5L5 23"/></svg>
+          <span><span class="strike" style="--d:1.2">que sientas que me debés una respuesta</span></span>
+        </li>
+        <li class="line" style="--d:1.9">
+          <svg class="cross" viewBox="0 0 28 28" style="--d:1.9"><path d="M5 5l18 18M23 5L5 23"/></svg>
+          <span><span class="strike" style="--d:1.9">pensar, ni por un segundo, que jugás con los sentimientos de alguien</span></span>
+        </li>
+      </ul>
+      <p class="line" style="--d:2.9">Eso último no se me cruzó <em>jamás</em>. Sé perfectamente quién sos, y por eso me quedé tan tranquilo con lo que me dijiste.</p>
+      <p class="line" style="--d:3.8"><span class="hl" style="--d:3.9">Me expresé terrible y te lastimé.</span></p>
+    </section>
+
+    <!-- 3 · lo que sí -->
+    <section class="scene" aria-label="Lo que sí">
+      <h2 class="line" style="--d:0">Lo que sí:</h2>
+      <ul class="list">
+        <li class="line" style="--d:.5">
+          <svg class="tick" viewBox="0 0 30 30" style="--d:.5"><path d="M4 16l8 8L27 6"/></svg>
+          <span>Escuché tu audio hasta el final.</span>
+        </li>
+        <li class="line" style="--d:1.1">
+          <svg class="tick" viewBox="0 0 30 30" style="--d:1.1"><path d="M4 16l8 8L27 6"/></svg>
+          <span>Gracias por decirme todo tan claro, aunque no fuera como lo tenías pensado.</span>
+        </li>
+        <li class="line" style="--d:1.9">
+          <svg class="tick" viewBox="0 0 30 30" style="--d:1.9"><path d="M4 16l8 8L27 6"/></svg>
+          <span>Tu tiempo es tuyo. Me adapto con gusto.</span>
+        </li>
+        <li class="line" style="--d:2.6">
+          <svg class="tick" viewBox="0 0 30 30" style="--d:2.6"><path d="M4 16l8 8L27 6"/></svg>
+          <span>Me quedé muy, muy contento.</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 4 · lo que pienso de vos -->
+    <section class="scene" aria-label="Lo que pienso de vos">
+      <h2 class="line" style="--d:0">Lo que pienso<br>de vos:</h2>
+      <p class="line" style="--d:.6">Sos la persona más linda que conozco.</p>
+      <p class="line" style="--d:1.3">Y no lo digo como un piropo armado (ya sé que esos no te gustan). Lo digo por cómo <span class="hl" style="--d:1.5">te preocupás por tus amigas</span>, por cómo <span class="hl" style="--d:2">llorás de emoción con una torta y unas flores</span>, por cómo te tomás el trabajo de <span class="hl" style="--d:2.5">explicarme lo que sentís</span> aunque cueste.</p>
+      <p class="line hand" style="--d:3.3">Para mí sos mi princesa, y no existe una versión de mí que piense otra cosa.</p>
+    </section>
+
+    <!-- 5 · la lista -->
+    <section class="scene" aria-label="La lista">
+      <h2 class="line" style="--d:0">La lista sigue<br>en construcción</h2>
+      <ul class="list">
+        <li class="line" style="--d:.5"><span class="box"></span><span>Hacer un picnic.</span></li>
+        <li class="line" style="--d:1"><span class="box"></span><span>Pintar cosas juntos: pintura, lienzo, manchas de colores en todos lados.</span></li>
+        <li class="line" style="--d:1.5"><span class="box"></span><span>Viajar por todo el mundo.</span></li>
+        <li class="line" style="--d:2"><span class="box"></span><span>Irnos a La Quiaca XD</span></li>
+        <li class="line" style="--d:2.5"><span class="box"></span><span>Tener una motor house.</span></li>
+        <li class="line" style="--d:3"><span class="box"></span><span>Tener 3 hijos (o 12, si te la bancás).</span></li>
+      </ul>
+      <p class="line small" style="--d:3.6">Sin apuro. Las listas largas se tachan de a poquito.</p>
+    </section>
+
+    <!-- 6 · final -->
+    <section class="scene" aria-label="Final">
+      <h2 class="line" style="--d:0">Ahora sí:<br>nada que responder.</h2>
+      <p class="line" style="--d:.6">Nos vemos el viernes o el sábado, como quedamos. Mientras, yo me pongo a estudiar, como me mandaste.</p>
+      <div class="line" style="--d:1.3">
+        <div class="pad used" id="pad">
+          <canvas id="cv" aria-label="Pizarra: dice Te quiero demasiado. Se puede borrar y escribir encima, es opcional"></canvas>
+          <div class="hint">escribí o dibujá lo que quieras</div>
+        </div>
+        <div class="tools" style="margin-top:8px">
+          <button class="sw on" data-c="#23335a" style="background:#23335a" aria-label="Azul"></button>
+          <button class="sw" data-c="#e5484d" style="background:#e5484d" aria-label="Rojo"></button>
+          <button class="sw" data-c="#2f9e6b" style="background:#2f9e6b" aria-label="Verde"></button>
+          <button class="clear" id="clear">borrar</button>
+        </div>
+      </div>
+      <p class="line hand" style="--d:2">— Juanchi, tu pendejo</p>
+    </section>
+
+  </div>
+
+  <div class="nav">
+    <button class="btn ghost" id="back" hidden aria-label="Volver">←</button>
+    <span class="spacer"></span>
+    <button class="btn" id="next">Abrir</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  var scenes=[].slice.call(document.querySelectorAll('.scene'));
+  var progress=document.getElementById('progress');
+  var next=document.getElementById('next'), back=document.getElementById('back');
+  var i=0;
+  scenes.forEach(function(){progress.appendChild(document.createElement('i'));});
+  var labels=['Abrir','Seguir','Seguir','Seguir','Seguir','Seguir',null];
+
+  function show(n){
+    i=Math.max(0,Math.min(scenes.length-1,n));
+    scenes.forEach(function(s,k){
+      s.classList.remove('active');
+      if(k===i){ void s.offsetWidth; s.classList.add('active'); s.scrollTop=0; }
+    });
+    [].forEach.call(progress.children,function(b,k){ b.classList.toggle('done',k<=i); });
+    back.hidden = i===0;
+    if(labels[i]===null){ next.hidden=true; } else { next.hidden=false; next.textContent=labels[i]; }
+    if(i===scenes.length-1){ setTimeout(sizeCanvas,60); setTimeout(writeMsg,1900); }
+  }
+  next.addEventListener('click',function(){show(i+1);});
+  back.addEventListener('click',function(){show(i-1);});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='Enter'){ if(i<scenes.length-1){e.preventDefault();show(i+1);} }
+    if(e.key==='ArrowLeft'){ show(i-1); }
+  });
+  var sx=null;
+  document.addEventListener('touchstart',function(e){ if(e.target.closest('#pad')) {sx=null;return;} sx=e.touches[0].clientX; },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(sx===null) return; var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>60){ show(dx<0?i+1:i-1); } sx=null;
+  },{passive:true});
+
+  /* garabato final */
+  var cv=document.getElementById('cv'), pad=document.getElementById('pad'), ctx=cv.getContext('2d');
+  var color='#23335a', drawing=false, last=null;
+  function sizeCanvas(){
+    var r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    if(!r.width) return;
+    var snap=null;
+    try{ snap=ctx.getImageData(0,0,cv.width,cv.height); }catch(e){}
+    cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=4;
+    if(snap){ try{ ctx.putImageData(snap,0,0);}catch(e){} }
+  }
+  window.addEventListener('resize',sizeCanvas);
+  function pos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+  cv.addEventListener('pointerdown',function(e){
+    drawing=true; last=pos(e); cv.setPointerCapture(e.pointerId); pad.classList.add('used');
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(last.x,last.y,2,0,6.3); ctx.fill();
+  });
+  cv.addEventListener('pointermove',function(e){
+    if(!drawing) return; var p=pos(e);
+    ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p;
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(t){ cv.addEventListener(t,function(){drawing=false;}); });
+  [].forEach.call(document.querySelectorAll('.sw'),function(b){
+    b.addEventListener('click',function(){
+      color=b.getAttribute('data-c');
+      [].forEach.call(document.querySelectorAll('.sw'),function(x){x.classList.toggle('on',x===b);});
+    });
+  });
+  var msgTimer=null, written=false;
+  document.getElementById('clear').addEventListener('click',function(){
+    clearInterval(msgTimer); written=true;
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height); ctx.restore(); pad.classList.remove('used');
+  });
+
+  /* mensaje inicial en la pizarra: se escribe solo, ella puede borrarlo y escribir lo suyo */
+  function writeMsg(){
+    if(written) return; written=true;
+    var go=function(){
+      var r=cv.getBoundingClientRect(), txt='Te quiero demasiado';
+      var size=Math.min(64,r.width/8.2);
+      ctx.font='700 '+size+'px Caveat, "Segoe Print", "Bradley Hand", cursive';
+      var w=ctx.measureText(txt).width;
+      if(w>r.width*0.86){ size=size*(r.width*0.86)/w; ctx.font='700 '+size+'px Caveat, "Segoe Print", "Bradley Hand", cursive'; w=ctx.measureText(txt).width; }
+      var x0=(r.width-w)/2, y=r.height/2+size*0.3, n=0;
+      msgTimer=setInterval(function(){
+        n++;
+        ctx.fillStyle='#e5484d';
+        ctx.fillText(txt.charAt(n-1), x0+ctx.measureText(txt.slice(0,n-1)).width, y);
+        if(n>=txt.length) clearInterval(msgTimer);
+      },90);
+    };
+    if(document.fonts&&document.fonts.load){ document.fonts.load('700 40px Caveat').then(go,go); } else { go(); }
+  }
+
+  show(0);
+})();
+</script>
+</body>
+</html>
